@@ -45,8 +45,8 @@ if sys.platform.startswith('win'):
 
 class CLI(object):
     def __init__(self):
+        self.version = "0.5"
         self.parser = argparse.ArgumentParser(description='Program multiple nRF5 devices concurrently with this nrfjprog inspired python module/exe', epilog='https://github.com/NordicSemiconductor/nRF5-multi-prog')
-        # a sugparse with name: command
         self.subparsers = self.parser.add_subparsers(dest='command')
         self.args = None
 
@@ -78,6 +78,7 @@ class CLI(object):
     def _add_sector_command(self):
         sector_parser = self.subparsers.add_parser('sector', help='Operate sector memory.')
 
+        self._add_erase_before_flash_group(sector_parser)
         self._add_snrs_argument(sector_parser)
         self._add_family_argument(sector_parser)
         self._add_read_sector_argument(sector_parser)
@@ -172,8 +173,10 @@ class nRF5MultiFlash(object):
     def _program_device(self, device):
         if self.args.eraseall:
             self.nRF5_instances[device].erase_all()
+            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased all'
         if self.args.sectorsanduicrerase:
             self.nRF5_instances[device].erase_uicr()
+            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased sector and UICR'
 
         for segment in self.hex_file.segments():
             start_addr, end_addr = segment
@@ -199,6 +202,13 @@ class nRF5MultiFlash(object):
         print 'program on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
 
     def _operate_memory(self, device):
+        if self.args.eraseall:
+            self.nRF5_instances[device].erase_all()
+            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased all'
+        if self.args.sectorsanduicrerase:
+            self.nRF5_instances[device].erase_uicr()
+            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased sector and UICR'
+
         # pass arg to pynrfjprog
         if self.args.readsector:
             address = int(self.args.readsector, 16)
@@ -208,10 +218,10 @@ class nRF5MultiFlash(object):
 
         if self.args.writesector:
             address = int(self.args.writesector, 16)
-            hexValue = self.args.writingvalue[2:]
+            hexString = self.args.writingvalue[2:]
             value = []
-            for i in range(0, len(hexValue), 2):
-                value.insert(0, int(hexValue[i:i+2], 16))
+            for i in range(0, len(hexString), 2):
+                value.insert(0, int(hexString[i:i+2], 16))
 
             try:
                 self.nRF5_instances[device].write(address, value, True)
