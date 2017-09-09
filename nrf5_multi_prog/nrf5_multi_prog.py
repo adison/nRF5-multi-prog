@@ -84,6 +84,7 @@ class CLI(object):
         self._add_read_sector_argument(sector_parser)
         self._add_write_sector_argument(sector_parser)
         self._add_sector_value_argument(sector_parser)
+        self._add_version_argument(sector_parser)
 
     # Mutually exclusive groups of arguments.
 
@@ -131,6 +132,9 @@ class CLI(object):
 
     def _add_sector_value_argument(self, parser):
         parser.add_argument('-vl', '--writingvalue', type=str, help='Value to write to sector.')
+
+    def _add_version_argument(self, parser):
+        parser.add_argument('-vr', '--version', action='store_true', help='Read FW version.')
 
 # the working object
 class nRF5MultiFlash(object):
@@ -208,6 +212,8 @@ class nRF5MultiFlash(object):
         if self.args.sectorsanduicrerase:
             self.nRF5_instances[device].erase_uicr()
             print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased sector and UICR'
+        if self.args.version:
+            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' version: ' + self.nRF5_instances[device].read_device_version()
 
         # pass arg to pynrfjprog
         if self.args.readsector:
