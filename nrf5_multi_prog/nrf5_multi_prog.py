@@ -46,11 +46,13 @@ if sys.platform.startswith('win'):
 class CLI(object):
     def __init__(self):
         self.parser = argparse.ArgumentParser(description='Program multiple nRF5 devices concurrently with this nrfjprog inspired python module/exe', epilog='https://github.com/NordicSemiconductor/nRF5-multi-prog')
+        # a sugparse with name: command
         self.subparsers = self.parser.add_subparsers(dest='command')
         self.args = None
 
         self._add_recover_command()
         self._add_program_command()
+        self._add_sector_command()
 
     def run(self):
         return self.parser.parse_args()
@@ -73,6 +75,15 @@ class CLI(object):
         self._add_snrs_argument(program_parser)
         self._add_verify_argument(program_parser)
 
+    def _add_sector_command(self):
+        sector_parser = self.subparsers.add_parser('sector', help='Operate sector memory.')
+
+        self._add_snrs_argument(sector_parser)
+        self._add_family_argument(sector_parser)
+        self._add_read_sector_argument(sector_parser)
+        self._add_write_sector_argument(sector_parser)
+        self._add_sector_value_argument(sector_parser)
+
     # Mutually exclusive groups of arguments.
 
     def _add_erase_before_flash_group(self, parser):
@@ -91,7 +102,7 @@ class CLI(object):
         parser.add_argument('-e', '--eraseall', action='store_true', help='Erase all user FLASH including UICR.')
 
     def _add_family_argument(self, parser):
-        parser.add_argument('--family', type=str, help='The family of the target device. Defaults to NRF51.', required=False, choices=['NRF51', 'NRF52'])
+        parser.add_argument('-fa', '--family', type=str, help='The family of the target device. Defaults to NRF51.', required=False, choices=['NRF51', 'NRF52'])
 
     def _add_file_argument(self, parser):
         parser.add_argument('-f', '--file', help='The hex file to be programmed to all devices.', required=True)
@@ -110,6 +121,15 @@ class CLI(object):
 
     def _add_verify_argument(self, parser):
         parser.add_argument('-v', '--verify', action='store_true', help='Read back memory and verify that it matches FILE.')
+
+    def _add_read_sector_argument(self, parser):
+        parser.add_argument('-rd', '--readsector', type=hex, nargs='+', help='Read sector value.')
+
+    def _add_write_sector_argument(self, parser):
+        parser.add_argument('-wr', '--writesector', type=hex, nargs='+', help='Write value to sector.')
+
+    def _add_sector_value_argument(self, parser):
+        parser.add_argument('-val', '--sectorvalue', type=hex, nargs='+', help='Value to write to sector.')
 
 # the working object
 class nRF5MultiFlash(object):
@@ -170,13 +190,19 @@ class nRF5MultiFlash(object):
 
             if self.args.verify:
                 read_data = self.nRF5_instances[device].read(start_addr, len(data))
-                assert (self._byte_lists_equal(data, read_data)), 'Verify failed. Data readback from memory does not match data written.'
+                assert (self._byte_lists_equal(data, read_data)), 'Verify failed. ' + ', '.join([str(x) for x in self.snrs]) + 'Data readback from memory does not match data written.'
 
         if self.args.systemreset:
             self.nRF5_instances[device].sys_reset()
             self.nRF5_instances[device].go()
 
         print 'program on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
+
+    def _operate_memory(self, device):
+        # if self.args.readsector:
+        #     print 'read sector'
+        
+        print '_operate_device'
 
     def _cleanup(self, device):
         self.nRF5_instances[device].disconnect_from_emu()
@@ -193,6 +219,8 @@ class nRF5MultiFlash(object):
             self._recover_device(device)
         elif self.args.command == 'program':
             self._program_device(device)
+        elif self.args.command == 'sector':
+            self._operate_memory(device)
 
         #clean 
         self._cleanup(device)
