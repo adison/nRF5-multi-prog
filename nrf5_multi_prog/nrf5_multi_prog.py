@@ -123,13 +123,13 @@ class CLI(object):
         parser.add_argument('-v', '--verify', action='store_true', help='Read back memory and verify that it matches FILE.')
 
     def _add_read_sector_argument(self, parser):
-        parser.add_argument('-rd', '--readsector', type=hex, nargs='+', help='Read sector value.')
+        parser.add_argument('-rd', '--readsector', type=str, help='Read sector value.')
 
     def _add_write_sector_argument(self, parser):
-        parser.add_argument('-wr', '--writesector', type=hex, nargs='+', help='Write value to sector.')
+        parser.add_argument('-wr', '--writesector', type=str, help='Write value to sector.')
 
     def _add_sector_value_argument(self, parser):
-        parser.add_argument('-val', '--sectorvalue', type=hex, nargs='+', help='Value to write to sector.')
+        parser.add_argument('-val', '--sectorvalue', type=str, help='Value to write to sector.')
 
 # the working object
 class nRF5MultiFlash(object):
@@ -199,10 +199,16 @@ class nRF5MultiFlash(object):
         print 'program on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
 
     def _operate_memory(self, device):
-        # if self.args.readsector:
-        #     print 'read sector'
-        
-        print '_operate_device'
+        # pass arg to pynrfjprog
+        if self.args.readsector:
+            address = int(self.args.readsector, 16)
+            value = self.nRF5_instances[device].read(address, 4)
+            print 'address: ' + self.args.readsector + '\naddress value:' +''.join([('%02x' % x) for x in value])
+        if self.args.writesector:
+            print self.args.sectorvalue
+            print 'write sector'
+
+        print 'sector operation on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
 
     def _cleanup(self, device):
         self.nRF5_instances[device].disconnect_from_emu()
