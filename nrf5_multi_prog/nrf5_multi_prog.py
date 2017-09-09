@@ -203,7 +203,7 @@ class nRF5MultiFlash(object):
         if self.args.readsector:
             address = int(self.args.readsector, 16)
             value = self.nRF5_instances[device].read(address, 4)
-            print 'address: ' + self.args.readsector + '\naddress value:' +''.join([('%02x' % x) for x in value])
+            print 'reading address: ' + self.args.readsector + '\naddress value:' +''.join([('%02x' % x) for x in reversed(value)])
         if self.args.writesector:
             print self.args.sectorvalue
             print 'write sector'
