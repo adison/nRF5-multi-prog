@@ -99,14 +99,14 @@ class CLI(object):
 
     # Arguments.
 
-    def _add_eraseall_argument(self, parser):
-        parser.add_argument('-e', '--eraseall', action='store_true', help='Erase all user FLASH including UICR.')
-
     def _add_family_argument(self, parser):
         parser.add_argument('-fm', '--family', type=str, help='The family of the target device. Defaults to NRF51.', required=False, choices=['NRF51', 'NRF52'])
 
     def _add_file_argument(self, parser):
         parser.add_argument('-f', '--file', help='The hex file to be programmed to all devices.', required=True)
+
+    def _add_eraseall_argument(self, parser):
+        parser.add_argument('-e', '--eraseall', action='store_true', help='Erase all user FLASH including UICR.')
 
     def _add_sectors_erase_argument(self, parser):
         parser.add_argument('-se', '--sectorserase', action='store_true', help='Erase all sectors that FILE contains data in before programming.')
