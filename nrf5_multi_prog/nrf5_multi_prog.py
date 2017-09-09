@@ -110,7 +110,7 @@ class CLI(object):
         parser.add_argument('-e', '--eraseall', action='store_true', help='Erase all user FLASH including UICR.')
 
     def _add_sectors_erase_argument(self, parser):
-        parser.add_argument('-se', '--sectorserase', action='store_true', help='Erase all sectors that FILE contains data in before programming.')
+        parser.add_argument('-se', '--sectorserase', action='store_true', help='Erase all sectors that FILE contains data in before programming. Sectorerase only avaiable in program mode.')
 
     def _add_sectorsuicr_erase_argument(self, parser):
         parser.add_argument('-u', '--sectorsanduicrerase', action='store_true', help='Erase all sectors that FILE contains data in and the UICR (unconditionally) before programming.')
@@ -174,14 +174,17 @@ class nRF5MultiFlash(object):
     def _recover_device(self, device):
         self.nRF5_instances[device].recover()
 
-    def _program_device(self, device):
+    def _erase_device(self, device):
         if self.args.eraseall:
             self.nRF5_instances[device].erase_all()
-            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased all'
-        if self.args.sectorsanduicrerase:
+            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased all.'
+        elif self.args.sectorsanduicrerase:
             self.nRF5_instances[device].erase_uicr()
-            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased sector and UICR'
+            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased sector and UICR.'
+        # elif self.args.sectorserase:
+        #     print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased sector.'
 
+    def _program_device(self, device):
         for segment in self.hex_file.segments():
             start_addr, end_addr = segment
             size = end_addr - start_addr
@@ -206,12 +209,6 @@ class nRF5MultiFlash(object):
         print 'program on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
 
     def _operate_memory(self, device):
-        if self.args.eraseall:
-            self.nRF5_instances[device].erase_all()
-            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased all'
-        if self.args.sectorsanduicrerase:
-            self.nRF5_instances[device].erase_uicr()
-            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased sector and UICR'
         if self.args.version:
             print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' version: ' + self.nRF5_instances[device].read_device_version()
 
@@ -220,9 +217,7 @@ class nRF5MultiFlash(object):
             address = int(self.args.readsector, 16)
             value = self.nRF5_instances[device].read(address, 4)
             print 'reading address: ' + self.args.readsector + '\naddress value:' +''.join([('%02x' % x) for x in reversed(value)])
-            print 'sector operation on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
-
-        if self.args.writesector:
+        elif self.args.writesector:
             address = int(self.args.writesector, 16)
             hexString = self.args.writingvalue[2:]
             value = []
@@ -232,12 +227,15 @@ class nRF5MultiFlash(object):
             try:
                 self.nRF5_instances[device].write(address, value, True)
                 print 'writting address: ' + self.args.writesector + '\naddress value:' + self.args.writingvalue
-                print 'sector operation on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
             except ValueError as e:
                 print '>>>> Error: \n' + str(e) + '\n<<<<\n'
+                raise Exception('Error', 'Wrong value')
             except APIError as e:
                 # todo: find "not erased ERROR", API doesn't find it
                 print '>>>> Error: \n' + str(e) + '\n<<<<\n'
+                raise Exception('Error', 'Wrong value')
+
+        print 'sector operation on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
 
     def _cleanup(self, device):
         self.nRF5_instances[device].disconnect_from_emu()
@@ -248,6 +246,8 @@ class nRF5MultiFlash(object):
     def perform_command(self, device):
         # connect
         self._connect_to_device(device)
+        # erase if any
+        self._erase_device(device)
 
         # action
         if self.args.command == 'recover':
