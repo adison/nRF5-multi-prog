@@ -102,7 +102,7 @@ class CLI(object):
         parser.add_argument('-e', '--eraseall', action='store_true', help='Erase all user FLASH including UICR.')
 
     def _add_family_argument(self, parser):
-        parser.add_argument('-fa', '--family', type=str, help='The family of the target device. Defaults to NRF51.', required=False, choices=['NRF51', 'NRF52'])
+        parser.add_argument('-fm', '--family', type=str, help='The family of the target device. Defaults to NRF51.', required=False, choices=['NRF51', 'NRF52'])
 
     def _add_file_argument(self, parser):
         parser.add_argument('-f', '--file', help='The hex file to be programmed to all devices.', required=True)
@@ -129,7 +129,7 @@ class CLI(object):
         parser.add_argument('-wr', '--writesector', type=str, help='Write value to sector.')
 
     def _add_sector_value_argument(self, parser):
-        parser.add_argument('-val', '--sectorvalue', type=str, help='Value to write to sector.')
+        parser.add_argument('-vl', '--writingvalue', type=str, help='Value to write to sector.')
 
 # the working object
 class nRF5MultiFlash(object):
@@ -204,11 +204,24 @@ class nRF5MultiFlash(object):
             address = int(self.args.readsector, 16)
             value = self.nRF5_instances[device].read(address, 4)
             print 'reading address: ' + self.args.readsector + '\naddress value:' +''.join([('%02x' % x) for x in reversed(value)])
-        if self.args.writesector:
-            print self.args.sectorvalue
-            print 'write sector'
+            print 'sector operation on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
 
-        print 'sector operation on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
+        if self.args.writesector:
+            address = int(self.args.writesector, 16)
+            hexValue = self.args.writingvalue[2:]
+            value = []
+            for i in range(0, len(hexValue), 2):
+                value.insert(0, int(hexValue[i:i+2], 16))
+
+            try:
+                self.nRF5_instances[device].write(address, value, True)
+                print 'writting address: ' + self.args.writesector + '\naddress value:' + self.args.writingvalue
+                print 'sector operation on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
+            except ValueError as e:
+                print '>>>> Error: \n' + str(e) + '\n<<<<\n'
+            except APIError as e:
+                # todo: find "not erased ERROR", API doesn't find it
+                print '>>>> Error: \n' + str(e) + '\n<<<<\n'
 
     def _cleanup(self, device):
         self.nRF5_instances[device].disconnect_from_emu()
