@@ -263,6 +263,7 @@ class nRF5MultiFlash(object):
 
 def main():
     cli = CLI()
+    print 'Nrf5_multi_prog version:' + cli.version
     args = cli.run()
 
     nRF = nRF5MultiFlash(args)
