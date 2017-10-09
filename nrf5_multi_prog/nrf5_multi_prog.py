@@ -45,7 +45,7 @@ if sys.platform.startswith('win'):
 
 class CLI(object):
     def __init__(self):
-        self.version = "0.5"
+        self.version = "0.5.1"
         self.parser = argparse.ArgumentParser(description='Program multiple nRF5 devices concurrently with this nrfjprog inspired python module/exe', epilog='https://github.com/NordicSemiconductor/nRF5-multi-prog')
         self.subparsers = self.parser.add_subparsers(dest='command')
         self.args = None
@@ -177,10 +177,10 @@ class nRF5MultiFlash(object):
     def _erase_device(self, device):
         if self.args.eraseall:
             self.nRF5_instances[device].erase_all()
-            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased all.'
+            print 'Erasing all of device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had finished.'
         elif self.args.sectorsanduicrerase:
             self.nRF5_instances[device].erase_uicr()
-            print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased sector and UICR.'
+            print 'Erasing sector and UICR of Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had finished.'
         # elif self.args.sectorserase:
         #     print 'Device(s) ' + ', '.join([str(x) for x in self.snrs]) + ' had erased sector.'
 
@@ -206,7 +206,7 @@ class nRF5MultiFlash(object):
             self.nRF5_instances[device].sys_reset()
             self.nRF5_instances[device].go()
 
-        print 'program on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
+        print 'Program on ' + ', '.join([str(x) for x in self.snrs]) + ' had completed'
 
     def _operate_memory(self, device):
         if self.args.version:
